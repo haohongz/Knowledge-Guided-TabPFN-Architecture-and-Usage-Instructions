@@ -1,6 +1,6 @@
 # TabPFNv2 架构分析
 
-> Haohong Zhang | University of Michigan
+> Haohong Zheng | University of Michigan
 >
 > 基于源码阅读和论文分析的架构拆解笔记
 
