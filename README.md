@@ -1,6 +1,6 @@
 # TabPFNv2 架构及使用指南
 
-> University of Michigan | KECC Research Group | Haohong Zhang
+> University of Michigan | Haohong Zheng
 >
 > Knowledge-Guided TabPFN 研究项目的基础环境与使用文档
 
