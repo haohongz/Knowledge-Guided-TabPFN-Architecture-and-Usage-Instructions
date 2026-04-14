@@ -193,10 +193,10 @@ df = pd.read_csv("你的数据.csv")
 
 ```bash
 # 从 Mac 上传文件到 Great Lakes：
-scp ~/Downloads/你的数据.csv haohongz@greatlakes.arc-ts.umich.edu:~/tabpfn_project/
+scp ~/Downloads/你的数据.csv ******@greatlakes.arc-ts.umich.edu:~/tabpfn_project/
 
 # 登录并运行：
-ssh haohongz@greatlakes.arc-ts.umich.edu
+ssh *****@greatlakes.arc-ts.umich.edu
 conda activate ~/tabpfn_env
 cd ~/tabpfn_project
 python run_medical.py
