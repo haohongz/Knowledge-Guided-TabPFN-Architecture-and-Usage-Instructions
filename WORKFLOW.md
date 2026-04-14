@@ -1,6 +1,6 @@
 # TabPFNv2 Complete Workflow: Input → Code → Output
 
-> Haohong Zhang | University of Michigan | KECC Research Group
+> Haohong Zheng | University of Michigan
 >
 > A step-by-step record of running TabPFNv2 on a medical dataset
 
@@ -92,7 +92,7 @@ print(f"\nAccuracy: {acc:.4f}")
 
 ```bash
 # Login
-ssh haohongz@greatlakes.arc-ts.umich.edu
+ssh ********@greatlakes.arc-ts.umich.edu
 
 # Activate environment
 conda activate ~/tabpfn_env
@@ -221,33 +221,33 @@ Your CSV table (40 patients × 6 features)
                │
                ▼
 ┌─────────────────────────────────┐
-│ model.fit(X_train, y_train)      │
-│ Store 32 training patients       │
-│ as "context" (NO training)       │
+│ model.fit(X_train, y_train)     │
+│ Store 32 training patients      │
+│ as "context" (NO training)      │
 └──────────────┬──────────────────┘
                │
                ▼
 ┌─────────────────────────────────┐
-│ model.predict(X_test)            │
-│                                  │
-│ Feed into 12-layer Transformer:  │
+│ model.predict(X_test)           │
+│                                 │
+│ Feed into 12-layer Transformer: │
 │   Input: 32 train + 8 test      │
-│   Each layer:                    │
-│     ① Row-wise attention         │
-│       (features interact)        │
-│     ② Column-wise attention      │
-│       (patients interact)        │
-│       (test attends to train)    │
-│     ③ MLP + LayerNorm            │
-│                                  │
-│ Single forward pass → done       │
+│   Each layer:                   │
+│     ① Row-wise attention       │
+│       (features interact)       │
+│     ② Column-wise attention    │
+│       (patients interact)       │
+│       (test attends to train)   │
+│     ③ MLP + LayerNorm          │
+│                                 │
+│ Single forward pass → done      │
 └──────────────┬──────────────────┘
                │
                ▼
 ┌─────────────────────────────────┐
-│ Output for each test patient:    │
-│   P(disease=0), P(disease=1)     │
-│   Predicted label = argmax       │
+│ Output for each test patient:   │
+│   P(disease=0), P(disease=1)    │
+│   Predicted label = argmax      │
 └─────────────────────────────────┘
 ```
 
