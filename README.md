@@ -11,7 +11,7 @@
 TabPFNv2 是一个表格数据的基础模型（Foundation Model），发表于 Nature 2025。它使用 **In-Context Learning (ICL)** 进行预测：将训练集作为"上下文"输入 Transformer，通过一次前向传播直接输出预测结果，**不需要对每个数据集单独训练**。
 
 本仓库记录了：
-- TabPFNv2 的环境配置与使用方法
+- TabPFNv2 的环境配置与使用方法(提前说明:这个配置的GPU是密歇根大学的GreatLake数据集,这里可以替换成自己的GPU)
 - 从 CSV 表格输入到预测输出的完整流程
 - TabPFNv2 的架构分析笔记
 
