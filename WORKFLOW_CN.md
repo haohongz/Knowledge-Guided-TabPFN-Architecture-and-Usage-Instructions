@@ -92,7 +92,7 @@ print(f"\nAccuracy: {acc:.4f}")
 
 ```bash
 # 登录
-ssh haohongz@greatlakes.arc-ts.umich.edu
+ssh ********@greatlakes.arc-ts.umich.edu
 
 # 激活环境
 conda activate ~/tabpfn_env
