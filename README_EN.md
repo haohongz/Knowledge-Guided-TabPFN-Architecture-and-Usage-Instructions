@@ -1,6 +1,6 @@
 # TabPFNv2: Architecture and Usage Instructions
 
-> University of Michigan | KECC Research Group | Haohong Zhang
+> University of Michigan | Haohong Zheng
 >
 > Foundational documentation for the Knowledge-Guided TabPFN research project
 
