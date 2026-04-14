@@ -1,6 +1,6 @@
 # TabPFNv2 完整工作流：输入 → 代码 → 输出
 
-> Haohong Zhang | University of Michigan | KECC Research Group
+> Haohong Zheng | University of Michigan
 >
 > 在医疗数据集上运行 TabPFNv2 的完整记录
 
@@ -221,42 +221,42 @@ python run_medical.py
     │
     ▼
 ┌─────────────────────────────────┐
-│ train_test_split                 │
-│ 32个病人 → 训练集                │
-│ 8个病人 → 测试集                 │
+│ train_test_split                │
+│ 32个病人 → 训练集                 │
+│ 8个病人 → 测试集                  │
 └──────────────┬──────────────────┘
                │
                ▼
 ┌─────────────────────────────────┐
-│ model.fit(X_train, y_train)      │
-│ 把32个训练病人存为"上下文"        │
-│ （没有训练！没有梯度下降！）       │
+│ model.fit(X_train, y_train)     │
+│ 把32个训练病人存为"上下文"          │
+│ （没有训练！没有梯度下降！）         │
 └──────────────┬──────────────────┘
                │
                ▼
 ┌─────────────────────────────────┐
-│ model.predict(X_test)            │
-│                                  │
+│ model.predict(X_test)           │
+│                                 │
 │ 送入12层 Transformer：           │
-│   输入：32个训练 + 8个测试        │
+│   输入：32个训练 + 8个测试         │
 │   每层做三件事：                  │
-│     ① Row-wise attention         │
+│     ① Row-wise attention       │
 │       （特征之间交互）            │
 │       "年龄和血压有什么关系？"     │
-│     ② Column-wise attention      │
+│     ② Column-wise attention    │
 │       （病人之间交互）            │
 │       "这个病人跟其他病人比？"     │
-│       （测试病人只看训练病人）     │
-│     ③ MLP + LayerNorm            │
-│                                  │
-│ 一次前向传播 → 完成               │
+│       （测试病人只看训练病人）      │
+│     ③ MLP + LayerNorm          │
+│                                 │
+│ 一次前向传播 → 完成                │
 └──────────────┬──────────────────┘
                │
                ▼
 ┌─────────────────────────────────┐
-│ 每个测试病人的输出：             │
-│   P(disease=0), P(disease=1)     │
-│   预测标签 = 概率更大的那个       │
+│ 每个测试病人的输出：               │
+│   P(disease=0), P(disease=1)    │
+│   预测标签 = 概率更大的那个         │
 └─────────────────────────────────┘
 ```
 
