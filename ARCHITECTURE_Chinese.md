@@ -18,14 +18,14 @@ TabPFNv2 是一个 12 层的 Transformer，使用 **二维注意力机制（Two-
   ▼
 ┌─────────────────────────────────────┐
 │  Preprocessing（预处理）              │
-│  缺失值处理、类别编码、标准化          │
-│  preprocessing.py                    │
+│  缺失值处理、类别编码、标准化            │
+│  preprocessing.py                   │
 └──────────────┬──────────────────────┘
                │
                ▼
 ┌─────────────────────────────────────┐
 │  Encoder（编码器）                    │
-│  每个数值 → d维向量                   │
+│  每个数值 → d维向量                    │
 │  encoders.py                         │
 │                                      │
 │  输入: (batch, n_samples, n_features)│
@@ -38,7 +38,7 @@ TabPFNv2 是一个 12 层的 Transformer，使用 **二维注意力机制（Two-
 │  每层做三件事:                        │
 │    ① Row-wise Attention（特征之间）   │
 │    ② Column-wise Attention（样本之间）│
-│    ③ MLP + LayerNorm                 │
+│    ③ MLP + LayerNorm                │
 │  layer.py                            │
 │                                      │
 │  shape 始终: (batch, n_samples, n_features, d_model) │
@@ -46,9 +46,9 @@ TabPFNv2 是一个 12 层的 Transformer，使用 **二维注意力机制（Two-
                │
                ▼
 ┌─────────────────────────────────────┐
-│  Output Head（输出头）               │
-│  向量 → 类别概率                     │
-│  transformer.py                      │
+│  Output Head（输出头）                │
+│  向量 → 类别概率                      │
+│  transformer.py                     │
 └──────────────┬──────────────────────┘
                │
                ▼
@@ -155,22 +155,22 @@ def forward(self, state, single_eval_pos, ...):
   │
   ▼
 ┌─────────────────────────────────────────┐
-│ ① attn_between_features (Row-wise)      │
+│ ① attn_between_features (Row-wise)     │
 │    不需要 transpose                      │
 │    同一行的特征互相做 attention            │
-│    "年龄和血压有什么关系？"               │
-│    → LayerNorm                           │
+│    "年龄和血压有什么关系？"                 │
+│    → LayerNorm                          │
 ├─────────────────────────────────────────┤
-│ ② attn_between_items (Column-wise)      │
-│    transpose(1,2) 交换样本维和特征维      │
+│ ② attn_between_items (Column-wise)     │
+│    transpose(1,2) 交换样本维和特征维       │
 │    同一列的样本互相做 attention            │
-│    "这个人的血压跟其他人比怎么样？"        │
+│    "这个人的血压跟其他人比怎么样？"          │
 │    做完后 transpose(1,2) 转回来           │
-│    → LayerNorm                           │
+│    → LayerNorm                          │
 ├─────────────────────────────────────────┤
 │ ③ MLP (前馈网络)                         │
 │    非线性变换                             │
-│    → LayerNorm                           │
+│    → LayerNorm                          │
 └─────────────────────────────────────────┘
   │
   ▼
