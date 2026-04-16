@@ -1,6 +1,6 @@
 # TabPFNv2 中间层图解
 
-> Haohong Zhang | University of Michigan | KECC Research Group
+> Haohong Zheng | University of Michigan
 >
 > 从黑箱到白箱：每一层的输入、输出、含义
 
@@ -10,15 +10,15 @@
 
 ### 现在（黑箱）：只看到输入和输出
 
-![黑箱](images/01_blackbox.png)
+![黑箱](figures/01_blackbox.png)
 
 ### 目标（白箱）：每一步都能看到
 
-![白箱](images/02_whitebox.png)
+![白箱](figures/02_whitebox.png)
 
 **为什么必须这样做？**
 
-刘老师原话："你需要整个流程，不能对你来说还是个黑箱，那我们就没法改进这方法了。"
+需要整个流程，不能还是个黑箱，那我们就没法改进这方法了
 
 | 原因 | 解释 |
 |------|------|
@@ -30,7 +30,7 @@
 
 ## 2. 完整12层架构
 
-![12层架构](images/03_architecture.png)
+![12层架构](figures/03_architecture.png)
 
 **结构说明：**
 
@@ -54,7 +54,7 @@
 
 ## 3. 子层①：Row-wise Attention（特征之间）
 
-![Row-wise Attention](images/04_row_attention.png)
+![Row-wise Attention](figures/04_row_attention.png)
 
 **含义：** 同一行的不同特征互相做 attention。模型学习"年龄和血压有什么关系"、"BMI和胆固醇有什么关联"。
 
@@ -62,7 +62,7 @@
 
 ## 4. 子层②：Column-wise Attention（样本之间）
 
-![Column-wise Attention](images/05_col_attention.png)
+![Column-wise Attention](figures/05_col_attention.png)
 
 **实现关键：** 通过 `transpose(1, 2)` 交换样本维和特征维。这样同一个 attention 模块就能用在两个方向上。
 
@@ -74,7 +74,7 @@
 
 以 "age=63" 这个 cell 为例，追踪它的向量怎么一步步演化：
 
-![向量演化](images/06_vector_evolution.png)
+![向量演化](figures/06_vector_evolution.png)
 
 **关键观察：** Shape 从头到尾都是 `(1, 150, 4, 256)`，**不会变化**。变化的是向量里的数值——每过一层，数值就更新一次，包含更多信息。
 
@@ -82,7 +82,7 @@
 
 ## 6. Attention 内部：Q、K、V 是什么
 
-![Q/K/V](images/07_qkv.png)
+![Q/K/V](figures/07_qkv.png)
 
 **图书馆类比：**
 
@@ -97,7 +97,7 @@
 
 ## 7. 怎么提取中间层：PyTorch Hook
 
-![Hook](images/08_hook.png)
+![Hook](figures/08_hook.png)
 
 **提取代码：**
 
@@ -156,7 +156,7 @@ for name, info in saved.items():
 
 ## 8. 研究路线图
 
-![研究路线图](images/09_roadmap.png)
+![研究路线图](figures/09_roadmap.png)
 
 ---
 
@@ -170,6 +170,6 @@ for name, info in saved.items():
 | 总共多少步？ | 12层 × 3子层 = 36步，加上 encoder 和输出头 |
 | 怎么提取？ | 用 PyTorch Hook，装一个"监听器"自动保存每层输出 |
 | 为什么要提取？ | 为了改模型。不知道中间在算什么，就不知道改哪里 |
-| 刘老师要求的程度？ | 能打印12层每层的输出 shape 和数值 |
+| 目前要求的程度？ | 能打印12层每层的输出 shape 和数值 |
 
 **一句话总结：** 看中间变量不是目的，是手段。目的是让你能改这个模型。
