@@ -1,1 +1,148 @@
+"""
+任务二：医疗数据 Forward Pass 手算验证
+3个训练病人 + 1个测试病人，追踪每一步的具体数字
 
+运行方式（Great Lakes 集群）：
+  conda activate ~/tabpfn_env
+  python Task2_medical_trace.py
+"""
+import torch
+import torch.nn.functional as F
+import numpy as np
+from tabpfn import TabPFNClassifier
+
+# ===== 1. 构造医疗数据 =====
+X_train = np.array([
+    [120, 90],    # 病人A: 血压120, 血糖90  → 健康
+    [140, 110],   # 病人B: 血压140, 血糖110 → 有病
+    [135, 105],   # 病人C: 血压135, 血糖105 → 有病
+], dtype=np.float64)
+y_train = np.array([0, 1, 1])  # 0=健康, 1=有病
+
+X_test = np.array([
+    [130, 100],   # 病人D: 血压130, 血糖100 → ？
+], dtype=np.float64)
+
+print("=" * 60)
+print("原始数据: 病人A(120,90,健康) B(140,110,有病) C(135,105,有病)")
+print("测试: 病人D(130,100,?)")
+print("=" * 60, flush=True)
+
+# ===== 2. 加载模型 =====
+model = TabPFNClassifier()
+model.fit(X_train, y_train)
+
+# ===== 3. 注册 hook =====
+saved = {}
+
+def make_hook(name):
+    def fn(module, input, output):
+        if isinstance(output, torch.Tensor):
+            saved[name] = output.detach().clone()
+        elif isinstance(output, tuple) and len(output) > 0 and isinstance(output[0], torch.Tensor):
+            saved[name] = output[0].detach().clone()
+    return fn
+
+hooks = []
+for name, module in model.model_.named_modules():
+    if name:
+        hooks.append(module.register_forward_hook(make_hook(name)))
+
+# ===== 4. 跑预测 =====
+y_pred = model.predict(X_test)
+y_proba = model.predict_proba(X_test)
+for h in hooks:
+    h.remove()
+
+# ===== 5. 逐步打印 =====
+
+# --- 步骤1: 顶层组件 ---
+print("\n--- 步骤1: 顶层组件 ---")
+for n in ["target_embedder", "feature_positional_embedding_embeddings", "add_thinking_rows"]:
+    if n in saved:
+        t = saved[n]
+        print(f"  {n}: shape={list(t.shape)}")
+
+# --- 步骤2: Block 0 Feature Attention ---
+print("\n--- 步骤2: Block 0 Feature Attention ---")
+for p in ["q_projection", "k_projection", "v_projection", "out_projection"]:
+    n = f"blocks.0.per_sample_attention_between_features.{p}"
+    if n in saved:
+        t = saved[n]
+        print(f"  {p}: shape={list(t.shape)}, 范围=[{t.min().item():.4f},{t.max().item():.4f}]")
+        print(f"    前5个值: {[round(v, 4) for v in t.flatten()[:5].tolist()]}")
+
+# 手动计算 attention score
+qn = "blocks.0.per_sample_attention_between_features.q_projection"
+kn = "blocks.0.per_sample_attention_between_features.k_projection"
+vn = "blocks.0.per_sample_attention_between_features.v_projection"
+if qn in saved and kn in saved and vn in saved:
+    Q, K, V = saved[qn], saved[kn], saved[vn]
+    d = Q.shape[-1]
+    raw = torch.matmul(Q, K.transpose(-2, -1)) / (d ** 0.5)
+    attn = F.softmax(raw, dim=-1)
+    print(f"\n  手动计算 score = softmax(QK^T/sqrt({d}))")
+    print(f"  Score shape: {list(attn.shape)}")
+    for s in range(min(3, attn.shape[0])):
+        mat = attn[s].detach().numpy()
+        print(f"  样本{s}的feature attention矩阵:")
+        for i in range(mat.shape[0]):
+            row = [f"{v:.4f}" for v in mat[i]]
+            print(f"    特征{i} -> [{', '.join(row)}]")
+    attn_out = torch.matmul(attn, V)
+    print(f"  Attention输出(score*V) shape: {list(attn_out.shape)}")
+    print(f"    前5个值: {[round(v, 4) for v in attn_out.flatten()[:5].tolist()]}")
+
+# --- 步骤3: Block 0 Sample Attention ---
+print("\n--- 步骤3: Block 0 Sample Attention ---")
+qn = "blocks.0.per_column_attention_between_cells.q_projection"
+kn = "blocks.0.per_column_attention_between_cells.k_projection"
+if qn in saved and kn in saved:
+    Q, K = saved[qn], saved[kn]
+    print(f"  Q: {list(Q.shape)}, K: {list(K.shape)}")
+    print(f"  K比Q少{Q.shape[-2] - K.shape[-2]}个样本(因果mask)")
+    d = Q.shape[-1]
+    raw = torch.matmul(Q, K.transpose(-2, -1)) / (d ** 0.5)
+    attn = F.softmax(raw, dim=-1)
+    print(f"  Score shape: {list(attn.shape)}")
+    last = attn[0, -1]
+    topk = torch.topk(last, min(5, last.shape[0]))
+    print(f"  最后一个样本(可能是病人D)最关注的key:")
+    for val, idx in zip(topk.values.tolist(), topk.indices.tolist()):
+        print(f"    key{idx}: {val:.6f}")
+
+# --- 步骤4: Block 0 MLP ---
+print("\n--- 步骤4: Block 0 MLP ---")
+for p in ["mlp.0", "mlp.1", "mlp.2", "mlp"]:
+    n = f"blocks.0.{p}"
+    if n in saved:
+        t = saved[n]
+        print(f"  {p}: shape={list(t.shape)}, 范围=[{t.min().item():.4f},{t.max().item():.4f}]")
+
+# --- 步骤5: Block 0 vs Block 23 ---
+print("\n--- 步骤5: Block 0 vs Block 23 对比 ---")
+for b in [0, 23]:
+    n = f"blocks.{b}"
+    if n in saved:
+        t = saved[n]
+        print(f"  Block {b}: shape={list(t.shape)}, 范围=[{t.min().item():.4f},{t.max().item():.4f}], 标准差={t.std().item():.4f}")
+
+# --- 步骤6: Output Projection ---
+print("\n--- 步骤6: Output Projection ---")
+for p in ["output_projection.0", "output_projection.1", "output_projection.2"]:
+    if p in saved:
+        t = saved[p]
+        print(f"  {p}: shape={list(t.shape)}, 范围=[{t.min().item():.4f},{t.max().item():.4f}]")
+        if "2" in p:
+            logits = t.squeeze()
+            print(f"  完整logits(10维): {[round(v, 4) for v in logits.tolist()]}")
+            probs = F.softmax(logits, dim=-1)
+            print(f"  Softmax概率:      {[round(v, 4) for v in probs.tolist()]}")
+
+# --- 最终预测 ---
+print(f"\n{'=' * 60}")
+print(f"最终预测")
+print(f"{'=' * 60}")
+print(f"  病人D(血压130,血糖100)")
+print(f"  预测: {y_pred[0]} ({'健康' if y_pred[0] == 0 else '有病'})")
+print(f"  概率: 健康={y_proba[0][0]:.4f}, 有病={y_proba[0][1]:.4f}")
